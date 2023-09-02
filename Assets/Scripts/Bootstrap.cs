@@ -20,8 +20,8 @@ public class Bootstrap : MonoBehaviour
     CreateDungeon();
   }
 
-  public void CreateDungeon()
+  public async void CreateDungeon()
   {
-    _creator.Create();
+    await _creator.Create();
   }
 }
