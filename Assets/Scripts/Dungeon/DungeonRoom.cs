@@ -19,7 +19,7 @@ public class DungeonRoom : MonoBehaviour
     var floorSize = Vector3.zero;
 
     if (_floor.TryGetComponent<Collider>(out var collider))
-      floorSize = collider.bounds.size;
+      floorSize = new Vector3(collider.bounds.size.x, collider.bounds.size.z);
     else
       throw new InvalidOperationException("Floor must have collider for calculated size.");
   

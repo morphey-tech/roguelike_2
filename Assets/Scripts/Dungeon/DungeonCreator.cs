@@ -36,7 +36,7 @@ public class DungeonCreator
 
     var roomsCount = _randomnessService.RandomInt(config.MinRoomsCount, config.MaxRoomsCount);
     _spawnedRooms = new DungeonRoom[roomsCount, roomsCount];
-    _spawnedRooms[roomsCount, roomsCount] = firstRoom;
+    _spawnedRooms[0, 0] = firstRoom;
 
     for (int i = 0; i < roomsCount; i++)
       CreateRandomRoom(dungeonGo.transform);
@@ -56,7 +56,7 @@ public class DungeonCreator
 
   private DungeonRoom GetRandomRoom()
   {
-    var randomIndex = _randomnessService.RandomInt(0, _roomPrefabsCache.Count);
+    var randomIndex = _randomnessService.RandomInt(0, _roomPrefabsCache.Count - 1);
     return _roomPrefabsCache[randomIndex];
   }
 
@@ -71,8 +71,8 @@ public class DungeonCreator
         if (_spawnedRooms[x, y] == null)
           continue;
 
-        var maxY = _spawnedRooms.GetLength(1) - 1;
         var maxX = _spawnedRooms.GetLength(0) - 1;
+        var maxY = _spawnedRooms.GetLength(1) - 1;
 
         var leftNeighbourPosition = new Vector2Int(x - 1, y);
         var rightNeighbourPosition = new Vector2Int(x + 1, y);
@@ -97,9 +97,9 @@ public class DungeonCreator
     var room = _assetsProvider.Create(randomRoom);
     room.transform.SetParent(parent);
 
-    var randomPositionIndex = _randomnessService.RandomInt(0, _roomPlaces.Count);
+    var randomPositionIndex = _randomnessService.RandomInt(0, _roomPlaces.Count - 1);
     var randomPosition = _roomPlaces.ElementAt(randomPositionIndex);
-    var targetPosition = new Vector3(randomPosition.x - room.Size.x, 0f, randomPosition.y - room.Size.y);
+    var targetPosition = new Vector3(randomPosition.x * room.Size.x, 0f, randomPosition.y * room.Size.y);
     room.transform.localPosition = targetPosition;
 
     _spawnedRooms[randomPosition.x, randomPosition.y] = room;

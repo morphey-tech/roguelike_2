@@ -26,7 +26,8 @@ public class Configs
       {
         ID = "conf_dungeon_1",
         Type = EnumDungeonType.STONE,
-        MaxRoomsCount = 10,
+        MinRoomsCount = 10,
+        MaxRoomsCount = 20,
         Rooms = new[]
         {
           "stone_room_1",
