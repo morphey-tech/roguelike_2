@@ -18,10 +18,26 @@ MonoBehaviour:
   m_GUID: c98336d955eab1d44949dfa88208e906
   m_SerializeEntries:
   - m_GUID: 86cde3869cec4b545ab9b6eeb4b4099d
-    m_Address: stone_room
+    m_Address: stone_room_1
     m_ReadOnly: 0
     m_SerializedLabels:
     - Dungeon
+  - m_GUID: 80b536a4ba5051140897c47e6c691839
+    m_Address: stone_room_2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 3872fd9a6c9cc714ea143c71f3c01149
+    m_Address: stone_room_3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: be57557bb77b7ce4fa92137f567e3a6a
+    m_Address: stone_room_4
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: a497189205dcf834cb3c6ae3873a3039
+    m_Address: stone_room_5
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 55c3b3992281f0f409ac8d19b9490e5c, type: 2}
   m_SchemaSet:

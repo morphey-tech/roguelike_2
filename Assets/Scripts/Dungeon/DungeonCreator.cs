@@ -5,7 +5,7 @@ using Zenject;
 
 public class DungeonCreator
 {
-  private readonly List<GameObject> _roomsPrefabs;
+  private readonly List<GameObject> _roomPrefabsCache;
 
   private readonly AssetsProviderService _assetsProvider;
   private readonly RandomnessService _randomnessService;
@@ -18,24 +18,28 @@ public class DungeonCreator
     _randomnessService = randomService;
     _config = configs;
 
-    _roomsPrefabs = new(5);
+    _roomPrefabsCache = new(10);
   }
 
   public async Task Create(string id)
   {
-    await Load();
-
     var config = _config.GetConf<ConfDungeon>(id);
+    await LoadRoomsBy(config);
+    
     var dungeonGo = new GameObject($"Dungeon: {config.ID}");
-
-    var roomsCount = _randomnessService.RandomInt(0, _roomsPrefabs.Count);
-    var firstRoom = _assetsProvider.Create(_roomsPrefabs[0], dungeonGo.transform);
+    var roomsCount = _randomnessService.RandomInt(0, _roomPrefabsCache.Count);
+    var firstRoom = _assetsProvider.Create(_roomPrefabsCache[0], dungeonGo.transform);
     firstRoom.transform.localPosition = Vector3.zero;
   }
 
-  private async Task Load()
+  private async Task LoadRoomsBy(ConfDungeon config)
   {
-    var roomPrefab = await _assetsProvider.LoadAsync<GameObject>("stone_room");
-    _roomsPrefabs.Add(roomPrefab);
+    _roomPrefabsCache.Clear();
+
+    foreach (var roomAlias in config.Rooms) 
+    {
+      var roomPrefab = await _assetsProvider.LoadAsync<GameObject>(roomAlias);
+      _roomPrefabsCache.Add(roomPrefab);
+    }
   }
 }

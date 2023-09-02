@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3536489465393070836}
   m_Layer: 0
-  m_Name: StoneRoom
+  m_Name: stone_room_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

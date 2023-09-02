@@ -1,4 +1,4 @@
 public enum EnumDungeonType
 {
-  DEFAULT = 0
+  STONE = 0
 }
