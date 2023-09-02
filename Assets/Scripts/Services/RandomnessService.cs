@@ -21,7 +21,7 @@ public class RandomnessService
 
   public int RandomInt(int min, int max)
   {
-    return _random.Next(min, max);
+    return _random.Next(min, max + 1);
   }
 
   public double RandomDouble()
@@ -31,6 +31,6 @@ public class RandomnessService
 
   public double RandomDouble(double min, double max)
   {
-    return _random.NextDouble() * (max  - min) + min;
+    return _random.NextDouble() * (max - min + 1) + min;
   }
 }

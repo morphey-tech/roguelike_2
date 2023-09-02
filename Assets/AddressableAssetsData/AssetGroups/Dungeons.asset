@@ -22,20 +22,20 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Dungeon
-  - m_GUID: 80b536a4ba5051140897c47e6c691839
-    m_Address: stone_room_2
+  - m_GUID: 2dde4762314b94d4b8dbc3b25918df7c
+    m_Address: stone_room_5
     m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: 3872fd9a6c9cc714ea143c71f3c01149
+  - m_GUID: f343797f1d1711e4194833062274b4b3
     m_Address: stone_room_3
     m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: be57557bb77b7ce4fa92137f567e3a6a
+  - m_GUID: 052db5b559f5c5145960bc3077a8b326
     m_Address: stone_room_4
     m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: a497189205dcf834cb3c6ae3873a3039
-    m_Address: stone_room_5
+  - m_GUID: 74596f7bff4d7ae43b0e4e57c475b895
+    m_Address: stone_room_2
     m_ReadOnly: 0
     m_SerializedLabels: []
   m_ReadOnly: 0
