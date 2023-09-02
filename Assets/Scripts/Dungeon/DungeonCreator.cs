@@ -9,10 +9,11 @@ public class DungeonCreator
   private readonly AssetsProviderService _assetsProvider;
   private readonly RandomnessService _randomnessService;
   private readonly Configs _configs;
-  
+
   private readonly List<DungeonRoom> _roomPrefabsCache;
-  private readonly HashSet<Vector2Int> _roomPlaces;
-  private DungeonRoom[,] _spawnedRooms;
+  private readonly List<DungeonRoom> _createdRoomsCache;
+  private readonly HashSet<Vector2Int> _possibleRoomPositions;
+  private DungeonRoom[,] _busyRoomsCoordinates;
 
   [Inject]
   public DungeonCreator(AssetsProviderService assetsProvider, RandomnessService randomService, Configs configs)
@@ -22,31 +23,40 @@ public class DungeonCreator
     _configs = configs;
 
     _roomPrefabsCache = new(10);
-    _roomPlaces = new(10);
+    _possibleRoomPositions = new(10);
+    _createdRoomsCache = new(10);
   }
 
-  public async Task Create(string id)
+  public async Task<Dungeon> Create(string id)
   {
+    _createdRoomsCache.Clear();
+
     var config = _configs.GetConf<ConfDungeon>(id);
     await LoadRoomsBy(config);
-    
+
     var dungeonGo = new GameObject($"Dungeon: {config.ID}");
+    var dungeonComp = dungeonGo.AddComponent<Dungeon>();
     var firstRoom = _assetsProvider.Create(GetRandomRoom(), dungeonGo.transform);
     firstRoom.transform.localPosition = Vector3.zero;
 
     var roomsCount = _randomnessService.RandomInt(config.MinRoomsCount, config.MaxRoomsCount);
-    _spawnedRooms = new DungeonRoom[roomsCount, roomsCount];
-    _spawnedRooms[0, 0] = firstRoom;
+    _busyRoomsCoordinates = new DungeonRoom[roomsCount, roomsCount];
+    _busyRoomsCoordinates[0, 0] = firstRoom;
+    _createdRoomsCache.Add(firstRoom);
 
     for (int i = 0; i < roomsCount; i++)
-      CreateRandomRoom(dungeonGo.transform);
+      _createdRoomsCache.Add(CreateRandomRoom(dungeonGo.transform));
+
+    dungeonComp.Init(_createdRoomsCache);
+
+    return dungeonComp;
   }
 
   private async Task LoadRoomsBy(ConfDungeon config)
   {
     _roomPrefabsCache.Clear();
 
-    foreach (var roomAlias in config.Rooms) 
+    foreach (var roomAlias in config.Rooms)
     {
       var roomPrefab = await _assetsProvider.LoadAsync<GameObject>(roomAlias);
       var roomComponent = roomPrefab.GetComponent<DungeonRoom>();
@@ -60,36 +70,36 @@ public class DungeonCreator
     return _roomPrefabsCache[randomIndex];
   }
 
-  private void CreateRandomRoom(Transform parent)
+  private DungeonRoom CreateRandomRoom(Transform parent)
   {
-    _roomPlaces.Clear();
+    _possibleRoomPositions.Clear();
 
-    for (int y = 0; y < _spawnedRooms.GetLength(1); y++)
+    for (int y = 0; y < _busyRoomsCoordinates.GetLength(1); y++)
     {
-      for (int x = 0; x < _spawnedRooms.GetLength(0); x++)
+      for (int x = 0; x < _busyRoomsCoordinates.GetLength(0); x++)
       {
-        if (_spawnedRooms[x, y] == null)
+        if (_busyRoomsCoordinates[x, y] == null)
           continue;
 
-        var maxX = _spawnedRooms.GetLength(0) - 1;
-        var maxY = _spawnedRooms.GetLength(1) - 1;
+        var maxX = _busyRoomsCoordinates.GetLength(0) - 1;
+        var maxY = _busyRoomsCoordinates.GetLength(1) - 1;
 
         var leftNeighbourPosition = new Vector2Int(x - 1, y);
         var rightNeighbourPosition = new Vector2Int(x + 1, y);
         var bottomNeighbourPosition = new Vector2Int(x, y - 1);
         var topNeighbourPosition = new Vector2Int(x, y + 1);
 
-        if (x > 0 && _spawnedRooms[leftNeighbourPosition.x, leftNeighbourPosition.y] == null)
-          _roomPlaces.Add(leftNeighbourPosition);
+        if (x > 0 && _busyRoomsCoordinates[leftNeighbourPosition.x, leftNeighbourPosition.y] == null)
+          _possibleRoomPositions.Add(leftNeighbourPosition);
 
-        if (x < maxX && _spawnedRooms[rightNeighbourPosition.x, rightNeighbourPosition.y] == null)
-          _roomPlaces.Add(rightNeighbourPosition);
+        if (x < maxX && _busyRoomsCoordinates[rightNeighbourPosition.x, rightNeighbourPosition.y] == null)
+          _possibleRoomPositions.Add(rightNeighbourPosition);
 
-        if (y > 0 && _spawnedRooms[bottomNeighbourPosition.x, bottomNeighbourPosition.y] == null)
-          _roomPlaces.Add(bottomNeighbourPosition);
+        if (y > 0 && _busyRoomsCoordinates[bottomNeighbourPosition.x, bottomNeighbourPosition.y] == null)
+          _possibleRoomPositions.Add(bottomNeighbourPosition);
 
-        if (y < maxY && _spawnedRooms[topNeighbourPosition.x, topNeighbourPosition.y] == null)
-          _roomPlaces.Add(topNeighbourPosition);
+        if (y < maxY && _busyRoomsCoordinates[topNeighbourPosition.x, topNeighbourPosition.y] == null)
+          _possibleRoomPositions.Add(topNeighbourPosition);
       }
     }
 
@@ -97,11 +107,13 @@ public class DungeonCreator
     var room = _assetsProvider.Create(randomRoom);
     room.transform.SetParent(parent);
 
-    var randomPositionIndex = _randomnessService.RandomInt(0, _roomPlaces.Count - 1);
-    var randomPosition = _roomPlaces.ElementAt(randomPositionIndex);
+    var randomPositionIndex = _randomnessService.RandomInt(0, _possibleRoomPositions.Count - 1);
+    var randomPosition = _possibleRoomPositions.ElementAt(randomPositionIndex);
     var targetPosition = new Vector3(randomPosition.x * room.Size.x, 0f, randomPosition.y * room.Size.y);
     room.transform.localPosition = targetPosition;
 
-    _spawnedRooms[randomPosition.x, randomPosition.y] = room;
+    _busyRoomsCoordinates[randomPosition.x, randomPosition.y] = room;
+
+    return room;
   }
 }
