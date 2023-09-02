@@ -22,6 +22,6 @@ public class Bootstrap : MonoBehaviour
 
   public async void CreateDungeon()
   {
-    await _creator.Create();
+    await _creator.Create("conf_dungeon_1");
   }
 }

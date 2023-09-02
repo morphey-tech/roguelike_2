@@ -24,7 +24,7 @@ public class Configs
     {
       new ConfDungeon()
       {
-        ID = "conf_location_1",
+        ID = "conf_dungeon_1",
         Type = EnumDungeonType.DEFAULT,
         MaxRoomsCount = 10
       }
