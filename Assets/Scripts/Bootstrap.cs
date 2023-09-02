@@ -17,11 +17,13 @@ public class Bootstrap : MonoBehaviour
     CreateDungeon();
   }
 
+  [CustomButton("Create Dungeon")]
   public async void CreateDungeon()
   {
     _dungeon = await _creator.Create("conf_dungeon_1");
   }
 
+  [CustomButton("Destroy Dungeon")]
   public void DestroyDungeon()
   {
     GameObject.Destroy(_dungeon.gameObject);
