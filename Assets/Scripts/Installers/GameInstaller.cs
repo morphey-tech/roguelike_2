@@ -17,6 +17,11 @@ namespace DI.Installers
         .Bind<AssetsProviderService>()
         .FromNew()
         .AsSingle();
+
+      Container
+        .Bind<RandomnessService>()
+        .FromNew()
+        .AsSingle();
     }
 
     private void BindConfigs()

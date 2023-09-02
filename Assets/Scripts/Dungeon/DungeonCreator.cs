@@ -6,15 +6,17 @@ using System.Threading.Tasks;
 
 public class DungeonCreator
 {
-  private readonly Random _random = new();
   private readonly List<GameObject> _roomsPrefabs;
+
   private readonly AssetsProviderService _assetsProvider;
+  private readonly RandomnessService _randomnessService;
   private readonly ConfDungeon _config;
 
   [Inject]
-  public DungeonCreator(AssetsProviderService assetsProvider, Configs configs)
+  public DungeonCreator(AssetsProviderService assetsProvider, RandomnessService randomService, Configs configs)
   {
     _assetsProvider = assetsProvider;
+    _randomnessService = randomService;
     _config = configs.GetConf<ConfDungeon>("conf_location_1");
     _roomsPrefabs = new(5);
   }
@@ -25,7 +27,7 @@ public class DungeonCreator
 
     var dungeonGo = new GameObject($"Dungeon: {_config.ID}");
 
-    var roomsCount = _random.Next(0, _roomsPrefabs.Count);
+    var roomsCount = _randomnessService.RandomInt(0, _roomsPrefabs.Count);
     var firstRoom = _assetsProvider.Create(_roomsPrefabs[0], dungeonGo.transform);
     firstRoom.transform.localPosition = Vector3.zero;
   }
