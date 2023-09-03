@@ -36,7 +36,7 @@ public class DungeonCreator
 
     var dungeonGo = new GameObject($"Dungeon: {config.ID}");
     var dungeonComp = dungeonGo.AddComponent<Dungeon>();
-    var firstRoom = _assetsProvider.Create(GetRandomRoom(), dungeonGo.transform);
+    var firstRoom = _assetsProvider.Create(GetRandomRoom(), parent: dungeonGo.transform);
     firstRoom.transform.localPosition = Vector3.zero;
 
     var roomsCount = _randomnessService.RandomInt(config.MinRoomsCount, config.MaxRoomsCount);
@@ -45,7 +45,7 @@ public class DungeonCreator
     _createdRoomsCache.Add(firstRoom);
 
     for (int i = 0; i < roomsCount; i++)
-      _createdRoomsCache.Add(CreateRandomRoom(dungeonGo.transform));
+      _createdRoomsCache.Add(CreateRandomRoom(dungeonGo));
 
     dungeonComp.Init(_createdRoomsCache);
 
@@ -70,7 +70,21 @@ public class DungeonCreator
     return _roomPrefabsCache[randomIndex];
   }
 
-  private DungeonRoom CreateRandomRoom(Transform parent)
+  private DungeonRoom CreateRandomRoom(GameObject parent)
+  {
+    var randomRoom = GetRandomRoom();
+    var room = _assetsProvider.Create(randomRoom);
+    room.transform.SetParent(parent);
+
+    var randomPosition = GetFreeRandomPosition();
+    var targetPosition = new Vector3(randomPosition.x * room.Size.x, 0f, randomPosition.y * room.Size.y);
+    room.transform.localPosition = targetPosition;
+    _busyRoomsCoordinates[randomPosition.x, randomPosition.y] = room;
+
+    return room;
+  }
+
+  private Vector2Int GetFreeRandomPosition()
   {
     _possibleRoomPositions.Clear();
 
@@ -89,31 +103,26 @@ public class DungeonCreator
         var bottomNeighbourPosition = new Vector2Int(x, y - 1);
         var topNeighbourPosition = new Vector2Int(x, y + 1);
 
-        if (x > 0 && _busyRoomsCoordinates[leftNeighbourPosition.x, leftNeighbourPosition.y] == null)
+        if (x > 0 && RoomCoordinateIsFree(leftNeighbourPosition))
           _possibleRoomPositions.Add(leftNeighbourPosition);
 
-        if (x < maxX && _busyRoomsCoordinates[rightNeighbourPosition.x, rightNeighbourPosition.y] == null)
+        if (x < maxX && RoomCoordinateIsFree(rightNeighbourPosition))
           _possibleRoomPositions.Add(rightNeighbourPosition);
 
-        if (y > 0 && _busyRoomsCoordinates[bottomNeighbourPosition.x, bottomNeighbourPosition.y] == null)
+        if (y > 0 && RoomCoordinateIsFree(bottomNeighbourPosition))
           _possibleRoomPositions.Add(bottomNeighbourPosition);
 
-        if (y < maxY && _busyRoomsCoordinates[topNeighbourPosition.x, topNeighbourPosition.y] == null)
+        if (y < maxY && RoomCoordinateIsFree(topNeighbourPosition))
           _possibleRoomPositions.Add(topNeighbourPosition);
       }
     }
 
-    var randomRoom = GetRandomRoom();
-    var room = _assetsProvider.Create(randomRoom);
-    room.transform.SetParent(parent);
-
     var randomPositionIndex = _randomnessService.RandomInt(0, _possibleRoomPositions.Count - 1);
-    var randomPosition = _possibleRoomPositions.ElementAt(randomPositionIndex);
-    var targetPosition = new Vector3(randomPosition.x * room.Size.x, 0f, randomPosition.y * room.Size.y);
-    room.transform.localPosition = targetPosition;
+    return _possibleRoomPositions.ElementAt(randomPositionIndex);
+  }
 
-    _busyRoomsCoordinates[randomPosition.x, randomPosition.y] = room;
-
-    return room;
+  private bool RoomCoordinateIsFree(Vector2Int target)
+  {
+    return _busyRoomsCoordinates[target.x, target.y] == null;
   }
 }

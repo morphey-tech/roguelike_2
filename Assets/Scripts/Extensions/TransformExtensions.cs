@@ -118,4 +118,9 @@ public static class TransformExtensions
   {
     return ((1 << t.gameObject.layer) & layer) != 0;
   }
+
+  public static void SetParent(this Transform t, GameObject parent)
+  {
+    t.SetParent(parent.transform);
+  }
 }
