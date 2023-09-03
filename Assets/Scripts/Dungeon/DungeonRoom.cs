@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DungeonRoom : MonoBehaviour
 {
+  [Header("Room Parts")]
   [SerializeField] private GameObject _floor;
+  [SerializeField] private List<GameObject> _doors;
 
   public Vector2 Size => _size;
 
