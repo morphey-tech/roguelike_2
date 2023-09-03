@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using Zenject;
 using System.Linq;
+using Unity.VisualScripting.FullSerializer;
 
 public class DungeonCreator
 {
@@ -27,16 +28,29 @@ public class DungeonCreator
     _createdRoomsCache = new(10);
   }
 
+  //Create - DONE
+  //Find neighbourds
+  //Make holes
+  //Fill interactable
   public async Task<Dungeon> Create(string id)
+  {
+    var config = _configs.GetConf<ConfDungeon>(id);
+    var dungeonGo = new GameObject($"Dungeon: {config.ID}");
+    var dungeonComp = dungeonGo.AddComponent<Dungeon>();
+    
+    await LoadRoomsBy(config);
+    await CreateRooms(config, dungeonGo);  
+
+    dungeonComp.Init(_createdRoomsCache);
+    return dungeonComp;
+  }
+
+  private async Task CreateRooms(ConfDungeon config, GameObject parent)
   {
     _createdRoomsCache.Clear();
 
-    var config = _configs.GetConf<ConfDungeon>(id);
-    await LoadRoomsBy(config);
-
-    var dungeonGo = new GameObject($"Dungeon: {config.ID}");
-    var dungeonComp = dungeonGo.AddComponent<Dungeon>();
-    var firstRoom = _assetsProvider.Create(GetRandomRoom(), parent: dungeonGo.transform);
+    var randomAliasOfRoom = GetRandomRoomAlias(config);
+    var firstRoom = await _assetsProvider.CreateAsync<DungeonRoom>(randomAliasOfRoom, parent.transform);
     firstRoom.transform.localPosition = Vector3.zero;
 
     var roomsCount = _randomnessService.RandomInt(config.MinRoomsCount, config.MaxRoomsCount);
@@ -45,11 +59,10 @@ public class DungeonCreator
     _createdRoomsCache.Add(firstRoom);
 
     for (int i = 0; i < roomsCount; i++)
-      _createdRoomsCache.Add(CreateRandomRoom(dungeonGo));
-
-    dungeonComp.Init(_createdRoomsCache);
-
-    return dungeonComp;
+    {
+      var createdRoom = await CreateRandomRoom(config, parent);
+      _createdRoomsCache.Add(createdRoom);
+    }
   }
 
   private async Task LoadRoomsBy(ConfDungeon config)
@@ -64,16 +77,16 @@ public class DungeonCreator
     }
   }
 
-  private DungeonRoom GetRandomRoom()
+  private string GetRandomRoomAlias(ConfDungeon config)
   {
-    var randomIndex = _randomnessService.RandomInt(0, _roomPrefabsCache.Count - 1);
-    return _roomPrefabsCache[randomIndex];
+    var randomIndex = _randomnessService.RandomInt(0, config.Rooms.Length - 1);
+    return config.Rooms[randomIndex];
   }
 
-  private DungeonRoom CreateRandomRoom(GameObject parent)
+  private async Task<DungeonRoom> CreateRandomRoom(ConfDungeon config, GameObject parent)
   {
-    var randomRoom = GetRandomRoom();
-    var room = _assetsProvider.Create(randomRoom);
+    var randomRoom = GetRandomRoomAlias(config);
+    var room = await _assetsProvider.CreateAsync<DungeonRoom>(randomRoom);
     room.transform.SetParent(parent);
 
     var randomPosition = GetFreeRandomPosition();

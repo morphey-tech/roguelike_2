@@ -9,9 +9,9 @@ public class AssetsProviderService
     return await Addressables.LoadAssetAsync<T>(alias).Task;
   }
 
-  public async Task<T> CreateAsync<T>(string alias) where T: Object
+  public async Task<T> CreateAsync<T>(string alias, Transform parent = null) where T: Object
   {
-    var loaded = await Addressables.InstantiateAsync(alias).Task;
+    var loaded = await Addressables.InstantiateAsync(alias, parent).Task;
 
     return loaded.TryGetComponent<T>(out var instance) 
       ? instance 
@@ -25,9 +25,9 @@ public class AssetsProviderService
     return handle.Result;
   }
 
-  public T Create<T>(string alias) where T: Object
+  public T Create<T>(string alias, Transform parent = null) where T: Object
   {
-    var handle = Addressables.Instantiate(alias).Task;
+    var handle = Addressables.Instantiate(alias, parent).Task;
 
     return handle.Result.TryGetComponent<T>(out var instance)
       ? instance
