@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class DungeonRoom : MonoBehaviour
@@ -8,24 +9,36 @@ public class DungeonRoom : MonoBehaviour
   [SerializeField] private GameObject _floor;
   [SerializeField] private List<GameObject> _doors;
 
-  public Vector2 Size => _size;
+  public Vector2Int DungeonPoint { get; private set; }
+  public Vector3 WorldPoint => transform.position;
 
-  private Vector2 _size;
+  private readonly HashSet<DungeonRoom> _neighbours = new(4);
 
-  private void Awake()
+  public Vector2 CalculateSize()
   {
-    _size = CalculateSize();
+    return _floor.TryGetComponent<Collider>(out var collider)
+      ? (Vector2)new Vector3(collider.bounds.size.x, collider.bounds.size.z)
+      : throw new InvalidOperationException("Floor must have collider for calculate room size.");
   }
 
-  private Vector2 CalculateSize()
+  public void SetDungeonPosition(Vector2Int position)
   {
-    var floorSize = Vector3.zero;
+    DungeonPoint = position;
+  }
 
-    if (_floor.TryGetComponent<Collider>(out var collider))
-      floorSize = new Vector3(collider.bounds.size.x, collider.bounds.size.z);
-    else
-      throw new InvalidOperationException("Floor must have collider for calculated size.");
-  
-    return floorSize;
+  public void AddNeighbour(DungeonRoom target)
+  {
+    _neighbours.Add(target);
+  }
+
+  [CustomButton("Print Neighbours")]
+  public void PrintNeighbours()
+  {
+    var neighbours = string.Empty;
+
+    for (int i = 0; i < _neighbours.Count; i++)
+      neighbours += $"{_neighbours.ElementAt(i).name}\n";
+
+    Debug.LogError($"I'm {gameObject.name} has this neighbours: \n{neighbours}", transform);
   }
 }
