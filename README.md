@@ -7,6 +7,7 @@
   - [ ] **Movement,<br/>**
   - [ ] **Attack,<br/>**
   - [ ] **Interaction.<br/>**
+- [ ] **Followed camera for playable character.<br/>**
 - [ ] **Interactive objects:<br/>**
   - [ ] **Weapons,<br/>**
   - [ ] **Chests.<br/>**
