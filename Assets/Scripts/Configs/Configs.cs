@@ -30,9 +30,7 @@ public class Configs
         MaxRoomsCount = 20,
         Rooms = new[]
         {
-          "stone_room_1",
-          "stone_room_2",
-          "stone_room_3"
+          "stone_room_1"
         }
       }
     };

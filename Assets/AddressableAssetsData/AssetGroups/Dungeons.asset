@@ -22,16 +22,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Dungeon
-  - m_GUID: 55bf33ebf1a0b744080ba4422193c796
-    m_Address: stone_room_2
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Dungeon
-  - m_GUID: 2e16c1528bde18342b0ed61ef93de254
-    m_Address: stone_room_3
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Dungeon
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 55c3b3992281f0f409ac8d19b9490e5c, type: 2}
   m_SchemaSet:

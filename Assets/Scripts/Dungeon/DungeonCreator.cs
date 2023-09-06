@@ -31,7 +31,7 @@ public sealed class DungeonCreator
 
   //1. Create - DONE
   //2. Find neighbourds - DONE
-  //3. Make holes - WIP
+  //3. Make holes - DONE
   //4. Fill interactable - ???
   public async UniTask<Dungeon> Create(string id)
   {
@@ -41,13 +41,11 @@ public sealed class DungeonCreator
 
     await LoadRoomsViewBy(config);
     await CreateRooms(config, dungeonGo);
-    FindRoomsNeighbours();
-    
-    //3
+    FindNeighborsForAllRooms();
     MakeRoomsConnections();
+
     //4
     await FillRoomsInteractiveObject();
-
     return dungeonComp.Init(_createdRoomsCache);
   }
 
@@ -128,16 +126,16 @@ public sealed class DungeonCreator
         var bottomNeighbourPosition = new Vector2Int(x, y - 1);
         var topNeighbourPosition = new Vector2Int(x, y + 1);
 
-        if (x > 0 && RoomCoordinateIsFree(leftNeighbourPosition))
+        if (x > 0 && RoomMissingAt(leftNeighbourPosition.x, leftNeighbourPosition.y))
           _possibleRoomPositions.Add(leftNeighbourPosition);
 
-        if (x < maxX && RoomCoordinateIsFree(rightNeighbourPosition))
+        if (x < maxX && RoomMissingAt(rightNeighbourPosition.x, rightNeighbourPosition.y))
           _possibleRoomPositions.Add(rightNeighbourPosition);
 
-        if (y > 0 && RoomCoordinateIsFree(bottomNeighbourPosition))
+        if (y > 0 && RoomMissingAt(bottomNeighbourPosition.x, bottomNeighbourPosition.y))
           _possibleRoomPositions.Add(bottomNeighbourPosition);
 
-        if (y < maxY && RoomCoordinateIsFree(topNeighbourPosition))
+        if (y < maxY && RoomMissingAt(topNeighbourPosition.x, topNeighbourPosition.y))
           _possibleRoomPositions.Add(topNeighbourPosition);
       }
     }
@@ -146,18 +144,18 @@ public sealed class DungeonCreator
     return _possibleRoomPositions.ElementAt(randomPositionIndex);
   }
 
-  private bool RoomCoordinateIsFree(Vector2Int target)
+  private bool RoomMissingAt(int x, int y)
   {
-    return _dungeonGrid[target.x, target.y] == null;
+    return _dungeonGrid[x, y] == null;
   }
 
-  private void FindRoomsNeighbours()
+  private void FindNeighborsForAllRooms()
   {
     for (int i = 0; i < _createdRoomsCache.Count; i++)
-      FindRoomNeighbours(_createdRoomsCache.ElementAt(i));
+      FindNeighborsFor(_createdRoomsCache.ElementAt(i));
   }
 
-  private void FindRoomNeighbours(DungeonRoom room)
+  private void FindNeighborsFor(DungeonRoom room)
   {
     var dungeonPoint = room.DungeonPoint;
 
@@ -174,19 +172,55 @@ public sealed class DungeonCreator
         var neighbourX = dungeonPoint.x + x;
         var neighbourY = dungeonPoint.y + y;
 
-        if (DungeonContainsPoint(neighbourX, neighbourY)) 
-          room.AddNeighbour(_dungeonGrid[neighbourX, neighbourY]);
+        if (DungeonContainsPoint(neighbourX, neighbourY) == false)
+          continue;
+
+        if (RoomMissingAt(neighbourX, neighbourY))
+          continue;
+
+        room.AddNeighbor(_dungeonGrid[neighbourX, neighbourY]);
       }
     }
   }
 
   private bool DungeonContainsPoint(int x, int y)
   {
-    return x >= 0 && y >= 0 && x < _dungeonGrid.GetLength(0) - 1 && y < _dungeonGrid.GetLength(1) - 1;
+    return x >= 0 && y >= 0 && x < _dungeonGrid.GetLength(0) && y < _dungeonGrid.GetLength(1);
   }
 
   private void MakeRoomsConnections()
   {
+    foreach (var room in _createdRoomsCache)
+    {
+      var minimumConnectionsCount = room.Neighbors.Count < 2 ? 1 : 2;
+      var randomConnectionsCount = _randomnessService.RandomInt(minimumConnectionsCount, room.Neighbors.Count);
+      var connectionsExist = room.GetNeighboursCountWithConnection();
+
+      if (connectionsExist >= randomConnectionsCount)
+        continue;
+
+      var requiredConnections = randomConnectionsCount - connectionsExist;
+
+      for (int i = 0; i < requiredConnections; i++)
+      {
+        DungeonRoom closedNeighbour = default;
+
+        do
+        {
+          var randomNeighborIndex = _randomnessService.RandomInt(0, room.Neighbors.Count - 1);
+          var randomNeighbor = room.Neighbors.ElementAt(randomNeighborIndex);
+          
+          if (room.HasConnectionWith(randomNeighbor))
+            continue;
+
+          closedNeighbour = randomNeighbor;
+        }
+        while (closedNeighbour == null);
+
+        room.MakeConnectionWith(closedNeighbour);
+      }
+
+    }
   }
 
   private async UniTask FillRoomsInteractiveObject()
