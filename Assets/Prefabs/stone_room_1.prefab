@@ -2846,12 +2846,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb9c196d2f58383478a59c4af5c5cd7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _floor: {fileID: 3536489466675630259}
-  _doors:
-  - {fileID: 4568106996346456039}
-  - {fileID: 1833121128793963422}
-  - {fileID: 5088277370763353156}
-  - {fileID: 2953859683147136469}
+  _floorCollider: {fileID: 4932322916373330176}
 --- !u!1 &3536489466675630259
 GameObject:
   m_ObjectHideFlags: 0

@@ -44,8 +44,7 @@ public sealed class DungeonCreator
     MakeRoomsConnections();
 
     //In feature
-    await FillRoomsInteractiveObject();
-
+    //await FillRoomsInteractiveObject();
     return dungeonComp.Init(_createdRoomsCache);
   }
 
@@ -70,6 +69,7 @@ public sealed class DungeonCreator
     var firstRoom = await _assetsProvider.CreateAsync<DungeonRoom>(randomAliasOfRoom);
     firstRoom.transform.SetParent(parent);
     firstRoom.transform.localPosition = Vector3.zero;
+    firstRoom.Init(Vector2Int.zero); //TODO: from default zero vector to random dungeon 
     _dungeonGrid[0, 0] = firstRoom; //TODO: random fisrt room pos
 
     _createdRoomsCache.Clear();
@@ -95,12 +95,11 @@ public sealed class DungeonCreator
     createdRoom.transform.SetParent(parent);
 
     var dungeonPoint = FindEmptyRandomPosition();
-    var roomSize = createdRoom.CalculateSize();
-    var worldX = dungeonPoint.x * roomSize.x;
-    var worldY = dungeonPoint.y * roomSize.y;
+    var worldX = dungeonPoint.x * createdRoom.Size.x;
+    var worldY = dungeonPoint.y * createdRoom.Size.y;
     var worldPosition = new Vector3(worldX, 0f, worldY);
     createdRoom.transform.localPosition = worldPosition;
-    createdRoom.SetDungeonPosition(dungeonPoint);
+    createdRoom.Init(dungeonPoint);
 
     _dungeonGrid[dungeonPoint.x, dungeonPoint.y] = createdRoom;
 
