@@ -5,11 +5,13 @@ public class Bootstrap : MonoBehaviour
 {
   private Dungeon _dungeon;
   private DungeonCreator _creator;
+  private Configs _configs;
 
   [Inject]
-  private void Construct(DungeonCreator dungeonCreator)
+  private void Construct(DungeonCreator dungeonCreator, Configs config)
   {
     _creator = dungeonCreator;
+    _configs = config;
   }
 
   private void Awake()
@@ -20,7 +22,8 @@ public class Bootstrap : MonoBehaviour
   [CustomButton("Create Dungeon")]
   public async void CreateDungeon()
   {
-    _dungeon = await _creator.Create("conf_dungeon_1");
+    var dungeonConfig = _configs.GetConf<ConfDungeon>("conf_dungeon_1"); 
+    _dungeon = await _creator.Create(dungeonConfig);
   }
 
   [CustomButton("Destroy Dungeon")]

@@ -3,53 +3,53 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using System.Linq;
 using Zenject;
-using System.Drawing;
-using System;
 
 public sealed class DungeonCreator
 {
   private readonly AssetsProviderService _assetsProvider;
   private readonly RandomnessService _randomnessService;
-  private readonly Configs _configs;
 
+  private DungeonRoom[,] _dungeonGrid;
   private readonly List<DungeonRoom> _roomPrefabsCache;
   private readonly HashSet<Vector2Int> _possibleRoomPositions;
   private readonly HashSet<DungeonRoom> _createdRoomsCache;
-  private DungeonRoom[,] _dungeonGrid;
+
+  private readonly Vector2Int[] _neighborsPattern =
+  {
+    new Vector2Int(0, 1),
+    new Vector2Int(-1, 0),
+    new Vector2Int(1, 0),
+    new Vector2Int(0, -1)
+  };
 
   [Inject]
-  public DungeonCreator(AssetsProviderService assetsProvider, RandomnessService randomService, Configs configs)
+  public DungeonCreator(AssetsProviderService assetsProvider, RandomnessService randomService)
   {
     _assetsProvider = assetsProvider;
     _randomnessService = randomService;
-    _configs = configs;
 
     _roomPrefabsCache = new(10);
     _possibleRoomPositions = new(10);
     _createdRoomsCache = new(20);
   }
 
-  //1. Create - DONE
-  //2. Find neighbourds - DONE
-  //3. Make holes - DONE
-  //4. Fill interactable - ???
-  public async UniTask<Dungeon> Create(string id)
+  public async UniTask<Dungeon> Create(ConfDungeon config)
   {
-    var config = _configs.GetConf<ConfDungeon>(id);
     var dungeonGo = new GameObject($"Dungeon: {config.ID}");
     var dungeonComp = dungeonGo.AddComponent<Dungeon>();
 
-    await LoadRoomsViewBy(config);
+    await LoadRoomsPrefabsBy(config);
     await CreateRooms(config, dungeonGo);
     FindNeighborsForAllRooms();
     MakeRoomsConnections();
 
-    //4
+    //In feature
     await FillRoomsInteractiveObject();
+
     return dungeonComp.Init(_createdRoomsCache);
   }
 
-  private async UniTask LoadRoomsViewBy(ConfDungeon config)
+  private async UniTask LoadRoomsPrefabsBy(ConfDungeon config)
   {
     _roomPrefabsCache.Clear();
 
@@ -63,22 +63,22 @@ public sealed class DungeonCreator
 
   private async UniTask CreateRooms(ConfDungeon config, GameObject parent)
   {
+    var totalRoomsCount = _randomnessService.RandomInt(config.MinRoomsCount, config.MaxRoomsCount);
+    _dungeonGrid = new DungeonRoom[totalRoomsCount, totalRoomsCount];
 
     var randomAliasOfRoom = GetRandomRoomAlias(config);
-    var firstRoom = await _assetsProvider.CreateAsync<DungeonRoom>(randomAliasOfRoom, parent.transform);
+    var firstRoom = await _assetsProvider.CreateAsync<DungeonRoom>(randomAliasOfRoom);
+    firstRoom.transform.SetParent(parent);
     firstRoom.transform.localPosition = Vector3.zero;
-
-    var roomsCount = _randomnessService.RandomInt(config.MinRoomsCount, config.MaxRoomsCount);
-    _dungeonGrid = new DungeonRoom[roomsCount, roomsCount];
-    _dungeonGrid[0, 0] = firstRoom;
+    _dungeonGrid[0, 0] = firstRoom; //TODO: random fisrt room pos
 
     _createdRoomsCache.Clear();
     _createdRoomsCache.Add(firstRoom);
 
-    for (int i = 0; i < roomsCount; i++)
+    for (int i = 1; i < totalRoomsCount; i++)
     {
-      var room = await CreateRandomRoom(config, parent);
-      _createdRoomsCache.Add(room);
+      var createdRoom = await CreateRandomRoom(config, parent);
+      _createdRoomsCache.Add(createdRoom);
     }
   }
 
@@ -90,58 +90,66 @@ public sealed class DungeonCreator
 
   private async UniTask<DungeonRoom> CreateRandomRoom(ConfDungeon config, GameObject parent)
   {
-    var randomRoom = GetRandomRoomAlias(config);
-    var room = await _assetsProvider.CreateAsync<DungeonRoom>(randomRoom);
-    room.transform.SetParent(parent);
+    var randomAliasOfRoom = GetRandomRoomAlias(config);
+    var createdRoom = await _assetsProvider.CreateAsync<DungeonRoom>(randomAliasOfRoom);
+    createdRoom.transform.SetParent(parent);
 
-    var randomPosition = GetFreeRandomPosition();
-    var roomSize = room.CalculateSize();
-    var targetX = randomPosition.x * roomSize.x;
-    var targetY = randomPosition.y * roomSize.y;
-    var targetPosition = new Vector3(targetX, 0f, targetY);
-    room.transform.localPosition = targetPosition;
-    room.SetDungeonPosition(randomPosition);
+    var dungeonPoint = FindEmptyRandomPosition();
+    var roomSize = createdRoom.CalculateSize();
+    var worldX = dungeonPoint.x * roomSize.x;
+    var worldY = dungeonPoint.y * roomSize.y;
+    var worldPosition = new Vector3(worldX, 0f, worldY);
+    createdRoom.transform.localPosition = worldPosition;
+    createdRoom.SetDungeonPosition(dungeonPoint);
 
-    _dungeonGrid[randomPosition.x, randomPosition.y] = room;
+    _dungeonGrid[dungeonPoint.x, dungeonPoint.y] = createdRoom;
 
-    return room;
+    return createdRoom;
   }
 
-  private Vector2Int GetFreeRandomPosition()
+  private Vector2Int FindEmptyRandomPosition()
+  {
+    DungeonRoom randomRoom;
+    Vector2Int dungeonPoint;
+
+    do
+    {
+      var randomIndex = _randomnessService.RandomInt(0, _createdRoomsCache.Count - 1);
+      randomRoom = _createdRoomsCache.ElementAt(randomIndex);
+    }
+    while (TryGetEmptyRandomPositionAround(randomRoom, out dungeonPoint) == false);
+
+    return dungeonPoint;
+  }
+
+
+  private bool TryGetEmptyRandomPositionAround(DungeonRoom room, out Vector2Int emptyPosition)
   {
     _possibleRoomPositions.Clear();
+    emptyPosition = default;
 
-    for (int y = 0; y < _dungeonGrid.GetLength(1); y++)
+    foreach (var pattern in _neighborsPattern)
     {
-      for (int x = 0; x < _dungeonGrid.GetLength(0); x++)
-      {
-        if (_dungeonGrid[x, y] == null)
-          continue;
+      var xPos = room.DungeonPoint.x + pattern.x;
+      var yPos = room.DungeonPoint.y + pattern.y;
 
-        var maxX = _dungeonGrid.GetLength(0) - 1;
-        var maxY = _dungeonGrid.GetLength(1) - 1;
+      if (DungeonContainsPoint(xPos, yPos) == false)
+        continue;
 
-        var leftNeighbourPosition = new Vector2Int(x - 1, y);
-        var rightNeighbourPosition = new Vector2Int(x + 1, y);
-        var bottomNeighbourPosition = new Vector2Int(x, y - 1);
-        var topNeighbourPosition = new Vector2Int(x, y + 1);
+      if (RoomMissingAt(xPos, yPos) == false)
+        continue;
 
-        if (x > 0 && RoomMissingAt(leftNeighbourPosition.x, leftNeighbourPosition.y))
-          _possibleRoomPositions.Add(leftNeighbourPosition);
-
-        if (x < maxX && RoomMissingAt(rightNeighbourPosition.x, rightNeighbourPosition.y))
-          _possibleRoomPositions.Add(rightNeighbourPosition);
-
-        if (y > 0 && RoomMissingAt(bottomNeighbourPosition.x, bottomNeighbourPosition.y))
-          _possibleRoomPositions.Add(bottomNeighbourPosition);
-
-        if (y < maxY && RoomMissingAt(topNeighbourPosition.x, topNeighbourPosition.y))
-          _possibleRoomPositions.Add(topNeighbourPosition);
-      }
+      var possiblePosition = new Vector2Int(xPos, yPos);
+      _possibleRoomPositions.Add(possiblePosition);
     }
 
+    if (_possibleRoomPositions.Count <= 0)
+      return false;
+
     var randomPositionIndex = _randomnessService.RandomInt(0, _possibleRoomPositions.Count - 1);
-    return _possibleRoomPositions.ElementAt(randomPositionIndex);
+    emptyPosition = _possibleRoomPositions.ElementAt(randomPositionIndex);
+
+    return true;
   }
 
   private bool RoomMissingAt(int x, int y)
@@ -157,29 +165,18 @@ public sealed class DungeonCreator
 
   private void FindNeighborsFor(DungeonRoom room)
   {
-    var dungeonPoint = room.DungeonPoint;
-
-    for (int x = -1; x <= 1; x++)
+    foreach (var pattern in _neighborsPattern)
     {
-      for (int y = -1; y <= 1; y++)
-      {
-        if (x == 0 && y == 0)
-          continue;
+      var xPos = room.DungeonPoint.x + pattern.x;
+      var yPos = room.DungeonPoint.y + pattern.y;
 
-        if (Math.Abs(x) + Math.Abs(y) > 1)
-          continue;
+      if (DungeonContainsPoint(xPos, yPos) == false)
+        continue;
 
-        var neighbourX = dungeonPoint.x + x;
-        var neighbourY = dungeonPoint.y + y;
+      if (RoomMissingAt(xPos, yPos))
+        continue;
 
-        if (DungeonContainsPoint(neighbourX, neighbourY) == false)
-          continue;
-
-        if (RoomMissingAt(neighbourX, neighbourY))
-          continue;
-
-        room.AddNeighbor(_dungeonGrid[neighbourX, neighbourY]);
-      }
+      room.AddNeighbor(_dungeonGrid[xPos, yPos]);
     }
   }
 
@@ -192,7 +189,7 @@ public sealed class DungeonCreator
   {
     foreach (var room in _createdRoomsCache)
     {
-      var minimumConnectionsCount = room.Neighbors.Count < 2 ? 1 : 2;
+      var minimumConnectionsCount = room.Neighbors.Count <= 2 ? 1 : 2;
       var randomConnectionsCount = _randomnessService.RandomInt(minimumConnectionsCount, room.Neighbors.Count);
       var connectionsExist = room.GetNeighboursCountWithConnection();
 
@@ -209,7 +206,7 @@ public sealed class DungeonCreator
         {
           var randomNeighborIndex = _randomnessService.RandomInt(0, room.Neighbors.Count - 1);
           var randomNeighbor = room.Neighbors.ElementAt(randomNeighborIndex);
-          
+
           if (room.HasConnectionWith(randomNeighbor))
             continue;
 
@@ -219,7 +216,6 @@ public sealed class DungeonCreator
 
         room.MakeConnectionWith(closedNeighbour);
       }
-
     }
   }
 
