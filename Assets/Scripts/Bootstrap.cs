@@ -4,11 +4,11 @@ using Zenject;
 public class Bootstrap : MonoBehaviour
 {
   private Dungeon _dungeon;
-  private DungeonCreator _creator;
+  private IDungeonCreator _creator;
   private Configs _configs;
 
   [Inject]
-  private void Construct(DungeonCreator dungeonCreator, Configs config)
+  private void Construct(IDungeonCreator dungeonCreator, Configs config)
   {
     _creator = dungeonCreator;
     _configs = config;

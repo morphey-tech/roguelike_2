@@ -36,8 +36,8 @@ namespace DI.Installers
     private void BindDungeonCreator()
     {
       Container
-        .Bind<DungeonCreator>()
-        .FromNew()
+        .Bind<IDungeonCreator>()
+        .To<DungeonCreator>()
         .AsSingle();
     }
   }

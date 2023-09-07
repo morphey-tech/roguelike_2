@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Linq;
 using Zenject;
 
-public sealed class DungeonCreator
+public sealed class DungeonCreator : IDungeonCreator
 {
   private readonly AssetsProviderService _assetsProvider;
   private readonly RandomnessService _randomnessService;
