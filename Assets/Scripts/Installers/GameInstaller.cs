@@ -1,45 +1,42 @@
 using Services;
 using Zenject;
 
-namespace DI.Installers
+public sealed class GameInstaller : MonoInstaller
 {
-  public sealed class GameInstaller : MonoInstaller
+  public override void InstallBindings()
   {
-    public override void InstallBindings()
-    {
-      BindServices();
-      BindConfigs();
-      BindDungeonCreator();
-    }
+    BindServices();
+    BindConfigs();
+    BindDungeonCreator();
+  }
 
-    private void BindServices()
-    {
-      Container
-        .Bind<AssetsProviderService>()
-        .FromNew()
-        .AsSingle();
+  private void BindServices()
+  {
+    Container
+      .Bind<AssetsProviderService>()
+      .FromNew()
+      .AsSingle();
 
-      Container
-        .Bind<RandomnessService>()
-        .FromNew()
-        .AsSingle();
-    }
+    Container
+      .Bind<RandomnessService>()
+      .FromNew()
+      .AsSingle();
+  }
 
-    private void BindConfigs()
-    {
-      Container
-        .Bind<Configs>()
-        .FromNew()
-        .AsSingle()
-        .NonLazy();
-    }
+  private void BindConfigs()
+  {
+    Container
+      .Bind<Configs>()
+      .FromNew()
+      .AsSingle()
+      .NonLazy();
+  }
 
-    private void BindDungeonCreator()
-    {
-      Container
-        .Bind<IDungeonCreator>()
-        .To<DungeonCreator>()
-        .AsSingle();
-    }
+  private void BindDungeonCreator()
+  {
+    Container
+      .Bind<IDungeonCreator>()
+      .To<DungeonCreator>()
+      .AsSingle();
   }
 }
