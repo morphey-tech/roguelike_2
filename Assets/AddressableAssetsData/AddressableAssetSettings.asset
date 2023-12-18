@@ -83,8 +83,8 @@ MonoBehaviour:
     m_ProfileVersion: 1
   m_LabelTable:
     m_LabelNames:
-    - default
     - Dungeon
+    - Scenes
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: d8e809880bd6dde41807aba0a42ff545, type: 2}

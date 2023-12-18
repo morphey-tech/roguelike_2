@@ -22,6 +22,22 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Dungeon
+  - m_GUID: 811dd868fbe31574baca078644e1775d
+    m_Address: dungeon_location
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Scenes
+  - m_GUID: 008f6a6aa21f02747bfb1ef02edefbf4
+    m_Address: game
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Scenes
+  - m_GUID: c0d6205c3faf60b48847c8258075591f
+    m_Address: world_map
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Scenes
+    - Dungeon
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 55c3b3992281f0f409ac8d19b9490e5c, type: 2}
   m_SchemaSet:
